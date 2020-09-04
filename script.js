@@ -2,7 +2,7 @@ const rulesBtn = document.getElementById('rules-btn');
 const closeBtn = document.getElementById('close-btn');
 const rules = document.getElementById('rules');
 const canvas = document.getElementById('canvas');
-const ctx = document.getElementById('2d');
+const ctx = canvas.getContext('2d');
 
 let score = 0;
 
@@ -45,7 +45,7 @@ for (let i = 0; i < brickRowCount; i++) {
     bricks[i] = [];
     for (let j = 0; j < brickColumnCount; j++) {
         const x = i * (brickInfo.w + brickInfo.padding) + brickInfo.offsetX;
-        const y = i * (brickInfo.h + brickInfo.padding) + brickInfo.offsetY;
+        const y = j * (brickInfo.h + brickInfo.padding) + brickInfo.offsetY;
         bricks[i][j] = { x, y, ...brickInfo };
     }
 }
@@ -97,7 +97,7 @@ function movePaddle() {
     }
 
     if (paddle.x < 0) {
-        paddle.x = o;
+        paddle.x = 0;
     }
 }
 
@@ -121,7 +121,7 @@ function moveBall() {
     // Paddle collision
     if (
         ball.x - ball.size > paddle.x &&
-        ball.x - ball.size < paddle.x + paddle.w &&
+        ball.x + ball.size < paddle.x + paddle.w &&
         ball.y + ball.size > paddle.y
     ) {
         ball.dy = -ball.speed;
@@ -148,9 +148,76 @@ function moveBall() {
     
     // Hit bottom wall - Lose
     if (ball.y + ball.size > canvas.height) {
-        showAllBricks()
+        showAllBricks();
         score = 0;
     }
 }
 
 // Increase score
+function increaseScore() {
+    score++;
+
+    if (score % (brickRowCount * brickRowCount) === 0) {
+        showAllBricks();
+    }
+}
+
+// Make all bricks appear
+function showAllBricks() {
+    bricks.forEach(column => {
+        column.forEach(brick => (brick.visible = true));
+    });
+}
+
+// Draw everything
+function draw() {
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    drawBall();
+    drawPaddle();
+    drawScore();
+    drawBricks();
+}
+
+// Update canvas drawing and animation
+function update() {
+    movePaddle();
+    moveBall();
+
+    // Draw everything
+    draw();
+
+    requestAnimationFrame(update);
+}
+
+update();
+
+// Keydown event
+function keyDown(e) {
+    if (e.key === 'Right' || e.key === 'ArrowRight') {
+        paddle.dx = paddle.speed;
+    } else if (e.key === 'Left' || e.key === 'ArrowLeft') {
+        paddle.dx = -paddle.speed;
+    }
+}
+
+// Keyup event
+function keyUp(e) {
+    if (
+        e.key === 'Right' ||
+        e.key === 'ArrowRight' ||
+        e.key === 'Left' ||
+        e.key === 'ArrowLeft'
+    ) {
+        paddle.dx = 0;
+    }
+}
+
+// Keyboard event handlers
+document.addEventListener('keydown', keyDown);
+document.addEventListener('keyup', keyUp);
+
+// Rules add close event handlers
+rulesBtn.addEventListener('click', () => rules.classList.add('show'));
+closeBtn.addEventListener('click', () => rules.classList.remove('show'));
